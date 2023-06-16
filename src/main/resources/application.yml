@@ -1,0 +1,31 @@
+server:
+  port:8081
+
+
+# database 연동 설정
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    #    각자 PC에 만들어놓은 Database이름을 써야 합니다.
+    url: jdbc:mysql://seoillab.iptime.org:33306/KNDB?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    #    mysql에 생성한 사용자 계정 정보를 써야 합니다.
+    username: knuser
+    password: 'kn@123456789'
+  thymeleaf:
+    cache: false
+#  sql:
+#    init:
+#      mode: always
+
+
+  # spring data jpa 설정
+  jpa:
+    database: mysql
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    open-in-view: false
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+#    defer-datasource-initialization: true
+
+

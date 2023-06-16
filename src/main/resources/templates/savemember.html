@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>회원 가입</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script
+            src="https://code.jquery.com/jquery-3.7.0.min.js"
+            integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g="
+            crossorigin="anonymous"></script>
+    <style>
+        .login-form {
+            width: 340px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .login-form form {
+            margin-bottom: 15px;
+            background: #f7f7f7;
+            box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+        }
+
+        .login-form h2 {
+            margin: 0 0 15px;
+        }
+
+        .form-control, .btn {
+            min-height: 38px;
+            border-radius: 2px;
+        }
+
+        .btn {
+            font-size: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="login-form">
+    <form action="/Member/save" method="post">
+        <h2 class="text-center">회원가입</h2>
+        <span>이름</span></br>
+        <div class="form-group">
+            <input type="text" class="form-control" placeholder="이름" required="required" name = "memberName">
+        </div>
+        <span>이메일</span></br>
+        <div class="form-group">
+            <input type="text" class="form-control" placeholder="이메일" required="required" name = "memberEmail">
+        </div>
+        <span>연락처</span></br>
+        <div class="form-group">
+            <input type="text" class="form-control" placeholder="연락처" required="required" name = "memberPhone">
+        </div>
+        <span>주소</span></br>
+        <div class="form-group">
+            <input type="text" class="form-control" placeholder="주소" required="required" name = "memberAdrss">
+        </div>
+        <span>상세주소</span></br>
+        <div class="form-group">
+            <input type="text" class="form-control" placeholder="상세주소" required="required" name = "memberAdrss2">
+        </div>
+        <span>아이디</span><span id=check-result></span></br>
+        <div class="form-group">
+            <input type="text" class="form-control" placeholder="아이디  " required="required" name = "memberId" id="memberId" onblur="idCheck()">
+        </div>
+        <span>비밀번호</span></br>
+        <div class="form-group">
+            <input type="password" class="form-control" placeholder="비밀번호" required="required" name = "memberPw">
+        </div>
+        <span>비밀번호 확인</span></br>
+        <div class="form-group">
+            <input type="password" class="form-control" placeholder="비밀번호" required="required" name = "member_pwcheck">
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary btn-block">회원가입</button>
+        </div>
+    </form>
+    <p class="text-center"><a href="./">돌아가기</a></p>
+</div>
+
+
+<!--<form action="Member/save" method="post">-->
+<!--    Id : <input type="text" name="memberId" id="memberId" onblur="idCheck()"><br>-->
+<!--    <span id=check-result></span><br>-->
+<!--    Pw: <input type="password" name="memberPw"><br>-->
+<!--    PwCheck: <input type="password" name="member_pwcheck"><br>-->
+<!--    Email: <input type="email" name="memberEmail"><br>-->
+<!--    Name: <input type="text" name="memberName"><br>-->
+<!--    Phone : <input type="tel" name="memberPhone"><br>-->
+<!--    adrss: <input type="text" name="memberAdrss"><br>-->
+<!--    adrss2: <input type="text" name="memberAdrss2"><br>-->
+
+<!--    <input type="submit" value="회원 가입">-->
+
+<!--</form>-->
+
+</body>
+<script th:inline="javascript">
+    const idCheck = () => {
+        const id = document.getElementById("memberId").value;
+        const checkResult = document.getElementById("check-result");
+        console.log("입력값 : ", id);
+        $.ajax({
+            type: "post",
+            url: "/member/id-check",
+            data: {
+                "memberId": id
+
+            },
+            success: function (result) {
+                console.log("요청 성공", result);
+                if (result == "ok") {
+                    console.log("사용가능한 아이디");
+                    checkResult.style.color = "green";
+                    checkResult.innerHTML = "사용 가능한 아이디";
+                } else {
+                    console.log("이미 사용중인 아이디");
+                    checkResult.innerHTML = "이미 사용중인 아이디";
+                    checkResult.style.color = "red";
+
+                }
+            },
+            error: function (err) {
+                console.log("에러", err);
+            }
+        });
+    }
+
+
+</script>
+</html>

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>Table with Waypoints</title>
+	<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+	<script src="https://apis.openapi.sk.com/tmap/jsv2?version=1&appKey=qOq5dOGQWJ13NNPRRn3kT6GVzqTlmyGh2euovGfE"></script>
+	<script type="text/javascript">
+		var map;
+		var marker_s, marekr_e;
+		var drawInfoArr = [];
+		
+		function initTmap() {
+			// 지도 생성
+			map = new Tmapv2.Map("map_div", {
+				center: new Tmapv2.LatLng(37.56701114710962, 126.9973611831669),
+				width: "100%",
+				height: "400px",
+				zoom: 15,
+				zoomControl: true,
+				scrollwheel: true
+			});
+			
+			// 시작, 도착 심볼 찍기
+			marker_s = new Tmapv2.Marker({
+				position: new Tmapv2.LatLng(37.568085523663385, 126.98605733268329),
+				icon: "http://tmapapi.sktelecom.com/upload/tmap/marker/pin_r_m_s.png",
+				iconSize: new Tmapv2.Size(24, 38),
+				map: map
+			});
+			
+			marker_e = new Tmapv2.Marker({
+				position: new Tmapv2.LatLng(37.56445848334345, 127.00973587385866),
+				icon: "http://tmapapi.sktelecom.com/upload/tmap/marker/pin_r_m_e.png",
+				iconSize: new Tmapv2.Size(24, 38),
+				map: map
+			});
+			
+			// 경유지 마커 생성
+			var createWaypointMarker = function (lat, lng) {
+				return new Tmapv2.Marker({
+					position: new Tmapv2.LatLng(lat, lng),
+					icon: "http://tmapapi.sktelecom.com/upload/tmap/marker/pin_b_m_1.png",
+					iconSize: new Tmapv2.Size(24, 38),
+					map: map
+				});
+			};
+			
+			// 테이블에서 경유지 정보 추출하여 경유지 마커 생성 및 API 요청에 추가
+			var processWaypoints = function () {
+				var waypoints = [];
+				
+				// 테이블에서 경유지 정보 추출
+				var table = document.getElementById("waypoints-table");
+				var rows = table.getElementsByTagName("tr");
+				for (var i = 1; i < rows.length; i++) {
+					var cells = rows[i].getElementsByTagName("td");
+					var name = cells[0].innerText;
+					var lat = parseFloat(cells[1].innerText);
+					var lng = parseFloat(cells[2].innerText);
+					
+					// 경유지 마커 생성
+					var marker = createWaypointMarker(lat, lng);
+					
+					// 경유지 정보를 API 요청에 추가
+					waypoints.push({
+						"viaPointId": "waypoint-" + i,
+						"viaPointName": name,
+						"viaX": lng.toString(),
+						"viaY": lat.toString()
+					});
+				}
+				
+				// API 요청 보내기
+				sendRouteOptimizationRequest(waypoints);
+			};
+			
+			// 경유지 최적화 API 요청 보내기
+			var sendRouteOptimizationRequest = function (waypoints) {
+				var headers = {};
+				headers["appKey"] = "qOq5dOGQWJ13NNPRRn3kT6GVzqTlmyGh2euovGfE";
+				
+				$.ajax({
+					type: "POST",
+					headers: headers,
+					url: "https://apis.openapi.sk.com/tmap/routes/routeOptimization30?version=1&format=json",
+					async: false,
+					contentType: "application/json",
+					data: JSON.stringify({
+						"reqCoordType": "WGS84GEO",
+						"resCoordType": "EPSG3857",
+						"startName": "출발",
+						"startX": "126.98605733268329",
+						"startY": "37.568085523663385",
+						"startTime": "201711121314",
+						"endName": "도착",
+						"endX": "127.00973587385866",
+						"endY": "37.56445848334345",
+						"searchOption": "0",
+						"viaPoints": waypoints
+					}),
+					success: function (response) {
+						var resultData = response.properties;
+						var resultFeatures = response.features;
+						
+						// 결과 출력
+						var tDistance = "총 거리 : " + (resultData.totalDistance / 1000).toFixed(1) + "km, ";
+						var tTime = "총 시간 : " + (resultData.totalTime / 60).toFixed(0) + "분, ";
+						var tFare = "총 요금 : " + resultData.totalFare + "원";
+						
+						$("#result").text(tDistance + tTime + tFare);
+						
+						for (var i in resultFeatures) {
+							var geometry = resultFeatures[i].geometry;
+							var properties = resultFeatures[i].properties;
+							var polyline_;
+							
+							drawInfoArr = [];
+							
+							if (geometry.type == "LineString") {
+								for (var j in geometry.coordinates) {
+									var latlng = new Tmapv2.Point(geometry.coordinates[j][0], geometry.coordinates[j][1]);
+									var convertPoint = new Tmapv2.Projection.convertEPSG3857ToWGS84GEO(latlng);
+									var convertChange = new Tmapv2.LatLng(convertPoint._lat, convertPoint._lng);
+									
+									drawInfoArr.push(convertChange);
+								}
+								
+								polyline_ = new Tmapv2.Polyline({
+									path: drawInfoArr,
+									strokeColor: "#FF0000",
+									strokeWeight: 6,
+									map: map
+								});
+							}
+						}
+					},
+					error: function (request, status, error) {
+						console.log("code:" + request.status + "\n" + "message:" + request.responseText + "\n" + "error:" + error);
+					}
+				});
+			};
+			
+			// 경유지 추가 버튼 클릭 시 테이블에 새로운 경유지 추가
+			$("#add-waypoint-btn").click(function () {
+				var table = document.getElementById("waypoints-table");
+				var rowCount = table.rows.length;
+				var row = table.insertRow(rowCount);
+				var cell1 = row.insertCell(0);
+				var cell2 = row.insertCell(1);
+				var cell3 = row.insertCell(2);
+				
+				cell1.innerHTML = "<input type='text' class='waypoint-name'>";
+				cell2.innerHTML = "<input type='text' class='waypoint-lat'>";
+				cell3.innerHTML = "<input type='text' class='waypoint-lng'>";
+			});
+			
+			// 경유지 처리 버튼 클릭 시 테이블에서 경유지 정보 추출 및 처리
+			$("#process-waypoints-btn").click(function () {
+				processWaypoints();
+			});
+		}
+		
+		// 페이지 로드 시 Tmap 초기화
+		$(document).ready(function () {
+			initTmap();
+		});
+	</script>
+</head>
+<body>
+	<div id="map_div"></div>
+	
+	<table id="waypoints-table">
+		<tr>
+			<th>경유지명</th>
+			<th>위도</th>
+			<th>경도</th>
+		</tr>
+		<tr>
+			<td><input type="text" class="waypoint-name"></td>
+			<td><input type="text" class="waypoint-lat"></td>
+			<td><input type="text" class="waypoint-lng"></td>
+		</tr>
+	</table>
+	
+	<button id="add-waypoint-btn">경유지 추가</button>
+	<button id="process-waypoints-btn">경유지 처리</button>
+	
+	<div id="result"></div>
+</body>
+</html>

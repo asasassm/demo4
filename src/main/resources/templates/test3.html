@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div class="row">
+    <div class="col-lg-6">
+
+        <div class="card position-relative">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">출발지 주소</h6>
+            </div>
+            <div class="card-body">
+                <div class="input-group">
+                    <input type="text" class="form-control bg-light border-0 small" id="address_st"
+                           placeholder="아이콘을 눌러 주소를 입력해 주세요."
+                           aria-label="Search" aria-describedby="basic-addon2">
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" type="button" id="btn_address_st">
+                            <i class="fas fa-search fa-sm"></i>
+                        </button>
+                        <script>
+                            document.getElementById("btn_address_st").onclick = function () {
+                                new daum.Postcode({
+                                    oncomplete: function (data) { //선택시 입력값 세팅
+                                        num = 1;
+                                        st_add = data.address;
+                                        document.getElementById("address_st").value = data.address; // 주소 넣기
+                                        add(data.address);
+                                        // document.querySelector("input[name=address_Q1]").focus(); //상세입력 포커싱
+                                    }
+                                }).open();
+                            };
+                        </script>
+
+                    </div>
+
+                </div>
+                <p id="text_st_add"></p>
+                </br>
+                <center>
+                    <a href='#; return false;' class="btn btn-primary btn-icon-split"
+                       onclick="st_addRow()">
+                                        <span class="icon text-white-50">
+                                            <i class="fas fa-check"></i>
+                                        </span>
+                        <span class="text">시작점 설정</span>
+                    </a>
+                </center>
+            </div>
+        </div>
+
+    </div>
+    <div class="col-lg-6">
+
+        <div class="card position-relative">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">목적지 주소</h6>
+            </div>
+            <div class="card-body">
+                <div class="input-group">
+                    <input type="text" class="form-control bg-light border-0 small" id="address_end"
+                           placeholder="아이콘을 눌러 주소를 입력해 주세요."
+                           aria-label="Search" aria-describedby="basic-addon2">
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" type="button" id="btn_address_end">
+                            <i class="fas fa-search fa-sm"></i>
+                        </button>
+                    </div>
+                    <script>
+                        document.getElementById("btn_address_end").onclick = function () {//돋보기 주소 api필요x1
+                            new daum.Postcode({
+                                oncomplete: function (data) { //선택시 입력값 세팅
+                                    num = 3;
+                                    end_add = data.address;
+                                    document.getElementById("address_end").value = data.address; // 주소 넣기
+                                    add(data.address);
+                                    // document.querySelector("input[name=address_Q1]").focus(); //상세입력 포커싱
+                                }
+                            }).open();
+                        };
+                    </script>
+                </div>
+                <p id="text_end_add"></p>
+                </br>
+                <center>
+                    <a href='#;return false;' class="btn btn-primary btn-icon-split"
+                       onclick="end_addRow()">
+                                        <span class="icon text-white-50">
+                                            <i class="fas fa-check"></i>
+                                        </span>
+                        <span class="text">목적지 설정</span>
+                    </a>
+                </center>
+            </div>
+        </div>
+
+    </div>
+
+
+</div>
+</br>
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">경유지 주소</h6>
+    </div>
+    <div class="card-body">
+        <div class="input-group">
+            <input type="text" class="form-control bg-light border-0 small" id="address_sel1"
+                   placeholder="아이콘을 눌러 주소를 입력해 주세요."
+                   aria-label="Search" aria-describedby="basic-addon2">
+            <div class="input-group-append">
+                <button class="btn btn-primary" type="button" id="btn_address_sel1">
+                    <i class="fas fa-search fa-sm"></i>
+                </button>
+            </div>
+            <script>
+                document.getElementById("btn_address_sel1").onclick = function () {
+                    new daum.Postcode({
+                        oncomplete: function (data) { //선택시 입력값 세팅
+                            num = 2;
+                            aa_add = data.address;
+                            document.getElementById("address_sel1").value = data.address; // 주소 넣기
+                            add(data.address);
+                            // document.querySelector("input[name=address_Q1]").focus(); //상세입력 포커싱
+                        }
+                    }).open();
+                };
+            </script>
+        </div>
+        </br>
+        <center>
+            <a href='#;return false;' class="btn btn-primary btn-icon-split" onclick="addRow()">
+                                        <span class="icon text-white-50">
+                                            <i class="fas fa-check"></i>
+                                        </span>
+                <span class="text">경유지 추가</span>
+            </a>
+        </center>
+    </div>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">경유지 목록</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="testTable" width="100%" cellspacing="0">
+                <thead>
+                <tr>
+                    <th>주소</th>
+                    <th>위도</th>
+                    <th>경도</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tfoot id="endTable">
+                <tr>
+                    <th>목적지를 설정해주세요.</th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                </tr>
+                </tfoot>
+                <tbody>
+                <tbody id="dataTable">
+                <tr>
+                    <td>경남 창원시 마산합포구 경남대학로 7</td>
+                    <td>35.183715</td>
+                    <td>128.552227</td>
+                    <td>
+                        <center>출발지</center>
+                    </td>
+                </tr>
+                <tr>
+                    <td>경남 창원시 마산합포구 대내동 1-29</td>
+                    <td>35.182771</td>
+                    <td>128.557532</td>
+                    <td>
+                        <center><a href='#;return false;' class="btn btn-danger"
+                                   onClick="removeRow(this)"><span
+                                class="icon text-white-50">
+                                            <i class="fas fa-trash"></i>
+                                        </span></a></center>
+                    </td>
+                </tr>
+                <tr>
+                    <td>경남 창원시 마산합포구 월영동서로 10</td>
+                    <td>35.178994</td>
+                    <td>128.560393</td>
+                    <td>
+                        <center><a href='#;return false;' class="btn btn-danger"
+                                   onClick="removeRow(this)"><span
+                                class="icon text-white-50">
+                                            <i class="fas fa-trash"></i>
+                                        </span></a></center>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function st_addRow() {//빈상태로 시작하면 에러1
+        var tableData = document.getElementById('dataTable');
+
+
+        if (st_add !== null) {
+            if (pl_st_add != st_add) {
+                tableData.deleteRow(0);
+                var row = tableData.insertRow(0);
+                var cell1 = row.insertCell(0); //주소
+                var cell2 = row.insertCell(1);
+                var cell3 = row.insertCell(2);
+                var cell4 = row.insertCell(3);
+                cell1.innerHTML = st_add;
+                cell2.innerHTML = x1;
+                cell3.innerHTML = y1;
+                cell4.innerHTML = "출발지"
+                pl_st_add = st_add;
+
+            } else {
+                alert(`기존 출발 주소와 동일합니다.`);
+                return;
+            }
+        } else {
+            alert('출발 주소가 비어있습니다.');
+            return;
+        }
+
+
+    }
+
+    function end_addRow() {
+        var tableData = document.getElementById('endTable');
+
+        if (end_add !== null) {
+            if (pl_end_add != end_add) {
+                tableData.deleteRow(0);
+                var row = tableData.insertRow(0);
+                var cell1 = row.insertCell(0); //주소
+                var cell2 = row.insertCell(1);
+                var cell3 = row.insertCell(2);
+                var cell4 = row.insertCell(3);
+                cell1.innerHTML = end_add;
+                cell2.innerHTML = x3;
+                cell3.innerHTML = y3;
+                cell4.innerHTML = "목적지"
+                pl_end_add = end_add;
+
+            } else {
+                alert(`기존 출발 주소와 동일합니다.`);
+                return;
+            }
+        } else {
+            alert('목적지 주소가 비어있습니다.');
+            return;
+        }
+
+
+    }
+
+    function addRow() { // 테이블 행 추가   경유지추가테이블1
+        if (aa_add !== null) {
+            if (pl_aa_add != aa_add) {
+                var tableData = document.getElementById('dataTable');
+                var row = tableData.insertRow(tableData.rows.length);
+
+                var cell1 = row.insertCell(0); //주소
+                var cell2 = row.insertCell(1);
+                var cell3 = row.insertCell(2);
+                var cell4 = row.insertCell(3);
+                cell1.innerHTML = aa_add;
+                cell2.innerHTML = x2;
+                cell3.innerHTML = y2;
+                // cell4.innerHTML = '<button type="button" className="btn_delete">삭제</button>';
+                cell4.innerHTML = '<center><a href=\'#;return false;\' class="btn btn-danger" onClick="removeRow(this)"><span\n' +
+                    '                                            class="icon text-white-50">\n' +
+                    '                                            <i class="fas fa-trash"></i>\n' +
+                    '                                        </span></a></center>';
+                pl_aa_add = aa_add;
+
+            } else {
+                alert(`이전 배송주소와 중복됩니다.`);
+                return;
+            }
+        } else {
+            alert('배송 주소가 비어있습니다.');
+            return;
+        }
+    }
+
+    function removeRow(btn) { // 테이블 행 삭제
+        // table element 찾기
+        const table = document.getElementById("dataTable");
+        const row_index = btn.closest('tr').rowIndex;
+        if (row_index === 1) {
+            alert(`출발 주소는 삭제할 수 없습니다.`);
+            return;
+        }
+        table.deleteRow(row_index - 1);
+    }
+
+</script>
+</body>
+</html>

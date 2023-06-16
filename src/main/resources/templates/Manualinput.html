@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>simpleMap</title>
+	<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+	<script src="https://apis.openapi.sk.com/tmap/jsv2?version=1&appKey=qOq5dOGQWJ13NNPRRn3kT6GVzqTlmyGh2euovGfE"></script>
+	<script type="text/javascript">
+
+		var map;
+		var marker_s, marekr_e;
+		var drawInfoArr = [];
+		var viaPoints = [];
+
+		function initTmap() {
+			// 1. 지도 띄우기
+			map = new Tmapv2.Map("map_div", {
+				center: new Tmapv2.LatLng(37.56701114710962, 126.9973611831669),
+				width: "100%",
+				height: "400px",
+				zoom: 15,
+				zoomControl: true,
+				scrollwheel: true
+			});
+
+			// 시작, 도착 심볼찍기
+			// 시작
+			marker_s = new Tmapv2.Marker({
+				position: new Tmapv2.LatLng(37.568085523663385, 126.98605733268329),
+				icon: "http://tmapapi.sktelecom.com/upload/tmap/marker/pin_r_m_s.png",
+				iconSize: new Tmapv2.Size(24, 38),
+				map: map
+			});
+
+				// 도착
+			marker_e = new Tmapv2.Marker({
+				position: new Tmapv2.LatLng(37.56445848334345, 127.00973587385866),
+				icon: "http://tmapapi.sktelecom.com/upload/tmap/marker/pin_r_m_e.png",
+				iconSize: new Tmapv2.Size(24, 38),
+				map: map
+			});
+
+				// 경유지 마커 추가
+			var viaMarkerIcons = [
+				"http://tmapapi.sktelecom.com/upload/tmap/marker/pin_b_m_1.png",
+				"http://tmapapi.sktelecom.com/upload/tmap/marker/pin_b_m_2.png",
+				"http://tmapapi.sktelecom.com/upload/tmap/marker/pin_b_m_3.png",
+				"http://tmapapi.sktelecom.com/upload/tmap/marker/pin_b_m_4.png",
+				"http://tmapapi.sktelecom.com/upload/tmap/marker/pin_b_m_5.png",
+				"http://tmapapi.sktelecom.com/upload/tmap/marker/pin_b_m_6.png"
+			];
+
+			for (var i = 0; i < viaPoints.length; i++) {
+				var marker = new Tmapv2.Marker({
+					position: new Tmapv2.LatLng(viaPoints[i].viaY, viaPoints[i].viaX),
+					icon: viaMarkerIcons[i],
+					iconSize: new Tmapv2.Size(24, 38),
+					map: map
+				});
+			}
+		}
+
+		function calculateRoute() {
+			var headers = {};
+			headers["appKey"] = "qOq5dOGQWJ13NNPRRn3kT6GVzqTlmyGh2euovGfE";
+
+			var reqData = {
+				reqCoordType: "WGS84GEO",
+				resCoordType: "EPSG3857",
+				startName: "출발",
+				startX: "126.98605733268329",
+				startY: "37.568085523663385",
+				startTime: "201711121314",
+				endName: "도착",
+				endX: "127.00973587385866",
+				endY: "37.56445848334345",
+				searchOption: "0",
+				viaPoints: viaPoints
+			};
+
+			$.ajax({
+				type: "POST",
+				headers: headers,
+				url: "https://apis.openapi.sk.com/tmap/routes/routeOptimization10?version=1&format=json",
+				async: false,
+				contentType: "application/json",
+				data: JSON.stringify(reqData),
+				success: function (response) {
+					var resultData = response.properties;
+					var resultFeatures = response.features;
+
+					// 결과 출력
+					var tDistance = "총 거리 : " + (resultData.totalDistance / 1000).toFixed(1) + "km,  ";
+					var tTime = "총 시간 : " + (resultData.totalTime / 60).toFixed(0) + "분,  ";
+					var tFare = "총 요금 : " + resultData.totalFare + "원";
+
+					$("#result").text(tDistance + tTime + tFare);
+
+					for (var i in resultFeatures) {
+						var geometry = resultFeatures[i].geometry;
+						var properties = resultFeatures[i].properties;
+						var polyline_;
+
+						drawInfoArr = [];
+
+						if (geometry.type == "LineString") {
+							for (var j in geometry.coordinates) {
+								// 경로들의 결과값(구간)들을 포인트 객체로 변환
+								var latlng = new Tmapv2.Point(geometry.coordinates[j][0], geometry.coordinates[j][1]);
+								// 포인트 객체를 받아 좌표값으로 변환
+								var convertPoint = new Tmapv2.Projection.convertEPSG3857ToWGS84GEO(latlng);
+								// 포인트객체의 정보로 좌표값 변환 객체로 저장
+								var convertChange = new Tmapv2.LatLng(convertPoint._lat, convertPoint._lng);
+
+								drawInfoArr.push(convertChange);
+							}
+
+							polyline_ = new Tmapv2.Polyline({
+								path: drawInfoArr,
+								strokeColor: "#FF0000",
+								strokeWeight: 6,
+								map: map
+							});
+						}
+					}
+				},
+				error: function (request, status, error) {
+					console.log("code:" + request.status + "\n" + "message:" + request.responseText + "\n" + "error:" + error);
+				}
+			});
+		}
+
+		$(document).ready(function () {
+			$("#add_via").click(function () {
+				var viaPointId = $("#via_id").val();
+				var viaPointName = $("#via_name").val();
+				var viaX = $("#via_x").val();
+				var viaY = $("#via_y").val();
+
+				var viaPoint = {
+					viaPointId: viaPointId,
+					viaPointName: viaPointName,
+					viaX: viaX,
+					viaY: viaY
+				};
+
+				viaPoints.push(viaPoint);
+
+				// 경유지 마커 추가
+				var marker = new Tmapv2.Marker({
+					position: new Tmapv2.LatLng(viaY, viaX),
+					icon: "http://tmapapi.sktelecom.com/upload/tmap/marker/pin_b_m_" + viaPoints.length + ".png",
+					iconSize: new Tmapv2.Size(24, 38),
+					map: map
+				});
+			});
+
+			$("#calculate_route").click(function () {
+				calculateRoute();
+			});
+
+			initTmap();
+		});
+	</script>
+</head>
+<body>
+
+<a  th:href = "@{/member/logout}">로그 아웃</a>
+
+<a  th:href = "@{/member/upadte}">내 정보 수정</a>
+
+<a th:href="@{/usertrip/list}" >여행지 보기</a>
+
+<a th:href="@{/usertrip/aco}" >내 여행지 보기</a>
+
+
+
+
+
+	<div id="map_div"></div>
+	<br>
+	경유지 추가:
+	<br>
+	<label> ID:</label>
+	<input type="text" id="trip">
+	<br>
+	<form action="/save/via" method="post">
+	<label>경유지 이름:</label>
+	<input type="text" name="tripName" >
+	<br>
+	<label>경유지 X 좌표:</label>
+	<input type="text" name="tripX">
+	<br>
+	<label>경유지 Y 좌표:</label>
+	<input type="text" name="tripY">
+	<br>
+	<button type="submit">추가</button>
+	</form>
+
+
+<!--<table>-->
+<!--	<tr>-->
+<!--		<th>여행지</th>-->
+<!--		<th>주소</th>-->
+<!--		<th>x좌표</th>-->
+<!--		<th>Y좌표</th>-->
+<!--		<th>삭제</th>-->
+<!--	</tr>-->
+<!--	<tr th:each="tripok: ${usertripok}">-->
+<!--		<td th:text="${tripok.tripName}"></td>-->
+<!--		<td th:text="${tripok.tripAdr}"></td>-->
+<!--		<td th:text="${tripok.tripX}"></td>-->
+<!--		<td th:text="${tripok.tripY}"></td>-->
+
+<!--		<td>-->
+<!--			&lt;!&ndash; query string /member?id=1-->
+<!--                rest api /member/1 &ndash;&gt;-->
+<!--		</td>-->
+<!--		<td>-->
+<!--			<a th:href="@{|/save/delete/${tripok.tripName}|}">삭제</a>-->
+<!--		</td>-->
+<!--	</tr>-->
+
+<!--</table>-->
+
+
+	<br><br>
+	<button id="calculate_route">경로 계산</button>
+	<br><br>
+	<div id="result"></div>
+</body>
+</html>

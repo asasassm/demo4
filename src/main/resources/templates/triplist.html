@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<table>
+  <tr>
+    <th>번호</th>
+    <th>여행지</th>
+    <th>주소</th>
+    <th>x좌표</th>
+    <th>Y좌표</th>
+
+    <th>삭제</th>
+  </tr>
+  <tr th:each="trip: ${tripList}">
+    <td th:text="${trip.tNum}"></td>
+    <td th:text="${trip.tName}"></td>
+    <td th:text="${trip.tRocate}"></td>
+    <td th:text="${trip.tX}"></td>
+    <td th:text="${trip.tY}"></td>
+
+    <td>
+      <!-- query string /member?id=1
+          rest api /member/1 -->
+    </td>
+    <td>
+      <a th:href="@{|/admin/delete/${trip.tNum}|}">삭제</a>
+    </td>
+  </tr>
+
+</table>
+
+</body>
+</html>
